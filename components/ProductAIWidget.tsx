@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import type { EnrichProductResponse, Faq } from "@/types/enrich-product";
 
+import styles from "./ProductAIWidget.module.css";
+
+
+
 interface ProductAIWidgetProps {
   productId: string;
   productTitle: string;
@@ -124,45 +128,92 @@ export default function ProductAIWidget({
 
   const hasContent = bullets.length > 0 || faqs.length > 0;
 
-  return (
-    <section>
-      <h2>Conteúdo gerado por IA</h2>
+return (
+  <section className={styles.widget}>
+    <div className={styles.widgetHeader}>
+      <div>
+        <span className={styles.eyebrow}>Assistente de produto</span>
+        <h2>Conteúdo gerado por IA</h2>
+      </div>
 
-      {loading && <p>Carregando conteúdo gerado por IA...</p>}
+      <span className={styles.status}>
+        <span />
+        IA ativa
+      </span>
+    </div>
 
-      {error && <p role="alert">{error}</p>}
+    {loading && (
+      <div className={styles.loading}>
+        <span className={styles.spinner} />
+        <div>
+          <strong>Gerando conteúdo</strong>
+          <p>A inteligência artificial está analisando o produto.</p>
+        </div>
+      </div>
+    )}
 
-      {!loading && !error && !hasContent && <p>Nenhum conteúdo disponível.</p>}
+    {!loading && error && (
+      <div className={styles.error} role="alert">
+        <strong>Não foi possível gerar o conteúdo.</strong>
+        <span>{error}</span>
+      </div>
+    )}
 
-      {!loading && !error && hasContent && (
-        <>
-          <ul>
+    {!loading && !error && !hasContent && (
+      <div className={styles.empty}>
+        <p>Nenhum conteúdo disponível.</p>
+      </div>
+    )}
+
+    {!loading && !error && hasContent && (
+      <div className={styles.content}>
+        <section className={styles.benefitsSection}>
+          <div className={styles.sectionHeading}>
+            <span className={styles.sectionLabel}>Benefícios</span>
+            <span className={styles.sectionCount}>{bullets.length}</span>
+          </div>
+
+          <ul className={styles.benefits}>
             {bullets.map((bullet) => (
-              <li key={bullet}>{bullet}</li>
+              <li key={bullet}>
+                <span className={styles.bulletIcon}>✓</span>
+                <span>{bullet}</span>
+              </li>
             ))}
           </ul>
+        </section>
 
-          <section>
-            <h3>Perguntas frequentes</h3>
-            <dl>
-              {faqs.map((faq) => (
-                <div key={faq.question}>
-                  <dt>{faq.question}</dt>
-                  <dd>{faq.answer}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        </>
-      )}
+        <section className={styles.faqSection}>
+          <div className={styles.sectionHeading}>
+            <div>
+              <span className={styles.sectionLabel}>Dúvidas comuns</span>
+              <h3>Perguntas frequentes</h3>
+            </div>
 
-      <button
-        type="button"
-        onClick={() => void fetchEnrichment(true)}
-        disabled={loading}
-      >
-        Regenerar
-      </button>
-    </section>
-  );
+            <span className={styles.sectionCount}>{faqs.length}</span>
+          </div>
+
+          <dl className={styles.faqList}>
+            {faqs.map((faq) => (
+              <div className={styles.faqItem} key={faq.question}>
+                <dt>{faq.question}</dt>
+                <dd>{faq.answer}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      </div>
+    )}
+
+    <button
+      className={styles.button}
+      type="button"
+      onClick={() => void fetchEnrichment(true)}
+      disabled={loading}
+    >
+      <span>{loading ? "Gerando..." : "Regenerar conteúdo"}</span>
+      {!loading && <span aria-hidden="true">↻</span>}
+    </button>
+  </section>
+);
 }
