@@ -24,7 +24,7 @@
         "url": "http://localhost:3000/api/enrich-product",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"productId\": \"001\",\n  \"productDescription\": \"Descrição\",\n  \"category\": \"Teste\"\n}",
+        "jsonBody": "={\n  \"productId\": \"={{ $json.body.productId }}\",\n  \"productTitle\": \"={{ $json.body.productTitle }}\",\n  \"productDescription\": \"={{ $json.body.productDescription }}\",\n  \"category\": \"={{ $json.body.category }}\"\n}",
         "options": {
           "response": {
             "response": {
@@ -228,7 +228,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "d7d85f3f-ddee-4605-a2d4-37ecbf2da49f",
+  "versionId": "753bb340-9852-4439-8db9-ceed846ba3c7",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b8a489f8aaac423be12231baeef71e46396aa70bede6dd6b63158242de7340b2"
