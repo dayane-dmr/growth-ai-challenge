@@ -1,20 +1,7 @@
 .page {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(124, 58, 237, 0.18),
-      transparent 32rem
-    ),
-    radial-gradient(
-      circle at top right,
-      rgba(37, 99, 235, 0.16),
-      transparent 30rem
-    ),
-    #070b17;
-  color: #f8fafc;
+  overflow-x: hidden;
 }
 
 .backgroundGlow {

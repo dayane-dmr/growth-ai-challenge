@@ -19,26 +19,28 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   return (
-    <>
-      <div className={styles.productCard}>
-        <span className={styles.category}>{product.category}</span>
+    <main className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.productCard}>
+          <span className={styles.category}>{product.category}</span>
 
-        <h1>{product.title}</h1>
+          <h1>{product.title}</h1>
 
-        <p>{product.description}</p>
+          <p>{product.description}</p>
 
-        <div className={styles.tags}>
-          <span>Produto #{product.id}</span>
-          <span>Catálogo DYN</span>
+          <div className={styles.tags}>
+            <span>Produto #{product.id}</span>
+            <span>Catálogo DYN</span>
+          </div>
         </div>
-      </div>
 
-      <ProductAIWidget
-        productId={product.id}
-        productTitle={product.title}
-        productDescription={product.description}
-        category={product.category}
-      />
-    </>
+        <ProductAIWidget
+          productId={product.id}
+          productTitle={product.title}
+          productDescription={product.description}
+          category={product.category}
+        />
+      </div>
+    </main>
   );
 }
