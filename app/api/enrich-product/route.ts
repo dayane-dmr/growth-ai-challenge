@@ -97,19 +97,11 @@ const RESPONSE_SCHEMA = {
 } as const;
 
 function buildPrompt(product: EnrichProductRequest): string {
-  return `Você é um redator de e-commerce. Gere conteúdo em português do Brasil para a página do produto abaixo, usando apenas as informações fornecidas.
+  return `Em português do Brasil, gere 2 a 3 benefícios curtos e exatamente 3 FAQs curtas (pergunta e resposta) para o produto abaixo. Use somente as informações fornecidas, sem inventar características e sem promessas médicas ou comerciais.
 
 Título: ${product.productTitle}
 Categoria: ${product.category}
-Descrição: ${product.productDescription}
-
-Regras obrigatórias:
-- Responda sempre em português do Brasil.
-- Gere de 2 a 3 benefícios objetivos do produto, baseados exclusivamente no título, categoria e descrição fornecidos.
-- Gere exatamente 3 perguntas frequentes com respostas, coerentes com as informações fornecidas.
-- Não invente características, especificações ou funcionalidades que não estejam na descrição.
-- Não faça promessas médicas, garantias comerciais ou qualquer afirmação que não esteja explicitamente fornecida acima.
-- Responda apenas com o JSON estruturado solicitado, sem texto adicional.`;
+Descrição: ${product.productDescription}`;
 }
 
 async function generateEnrichment(
@@ -118,8 +110,10 @@ async function generateEnrichment(
   const client = getClient();
 
   const response = await client.responses.create({
-    model: "gpt-5-mini",
+    model: "gpt-5-nano",
     input: buildPrompt(product),
+    max_output_tokens: 500,
+    reasoning: { effort: "minimal" },
     text: {
       format: {
         type: "json_schema",
