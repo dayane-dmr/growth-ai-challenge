@@ -1,6 +1,20 @@
 import { NextResponse } from "next/server";
 import type { EnrichProductResponse } from "@/types/enrich-product";
 
+type EnrichProductCache = Map<string, EnrichProductResponse>;
+
+declare global {
+  var enrichProductCache: EnrichProductCache | undefined;
+}
+
+function getCache(): EnrichProductCache {
+  if (!globalThis.enrichProductCache) {
+    globalThis.enrichProductCache = new Map<string, EnrichProductResponse>();
+  }
+
+  return globalThis.enrichProductCache;
+}
+
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
@@ -82,5 +96,15 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json(buildMockResponse());
+  const cache = getCache();
+  const cached = cache.get(productId);
+
+  if (cached) {
+    return NextResponse.json(cached);
+  }
+
+  const response = buildMockResponse();
+  cache.set(productId, response);
+
+  return NextResponse.json(response);
 }
