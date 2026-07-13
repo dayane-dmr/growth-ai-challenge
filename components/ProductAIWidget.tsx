@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { EnrichProductResponse, Faq } from "@/types/enrich-product";
 
 interface ProductAIWidgetProps {
   productId: string;
@@ -9,33 +10,58 @@ interface ProductAIWidgetProps {
   category: string;
 }
 
-interface Faq {
-  question: string;
-  answer: string;
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
-const MOCK_BULLETS: string[] = [
-  "Alta qualidade e durabilidade comprovadas",
-  "Ótimo custo-benefício em relação à categoria",
-  "Bem avaliado por outros clientes",
-];
+function isFaq(value: unknown): value is Faq {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
 
-const MOCK_FAQS: Faq[] = [
-  {
-    question: "Qual o prazo de entrega?",
-    answer:
-      "O prazo de entrega varia conforme a região, em média de 3 a 7 dias úteis.",
-  },
-  {
-    question: "O produto possui garantia?",
-    answer:
-      "Sim, o produto possui garantia de 90 dias contra defeitos de fabricação.",
-  },
-  {
-    question: "É possível trocar o produto?",
-    answer: "Sim, trocas podem ser solicitadas em até 30 dias após a compra.",
-  },
-];
+  const { question, answer } = value as Record<string, unknown>;
+
+  return isNonEmptyString(question) && isNonEmptyString(answer);
+}
+
+function isEnrichProductResponse(
+  value: unknown
+): value is EnrichProductResponse {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const { bullets, faqs } = value as Record<string, unknown>;
+
+  const hasValidBullets =
+    Array.isArray(bullets) &&
+    bullets.length >= 2 &&
+    bullets.length <= 3 &&
+    bullets.every(isNonEmptyString);
+
+  const hasValidFaqs =
+    Array.isArray(faqs) && faqs.length === 3 && faqs.every(isFaq);
+
+  return hasValidBullets && hasValidFaqs;
+}
+
+async function getErrorMessage(response: Response): Promise<string> {
+  try {
+    const data: unknown = await response.json();
+
+    if (
+      typeof data === "object" &&
+      data !== null &&
+      typeof (data as Record<string, unknown>).message === "string"
+    ) {
+      return (data as Record<string, unknown>).message as string;
+    }
+  } catch {
+    return "Não foi possível carregar o conteúdo gerado por IA.";
+  }
+
+  return "Não foi possível carregar o conteúdo gerado por IA.";
+}
 
 export default function ProductAIWidget({
   productId,
@@ -43,29 +69,72 @@ export default function ProductAIWidget({
   productDescription,
   category,
 }: ProductAIWidgetProps) {
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [bullets, setBullets] = useState<string[]>(MOCK_BULLETS);
-  const [faqs, setFaqs] = useState<Faq[]>(MOCK_FAQS);
+  const [bullets, setBullets] = useState<string[]>([]);
+  const [faqs, setFaqs] = useState<Faq[]>([]);
 
-function handleRegenerate() {
-  console.log({
-    productId,
-    productTitle,
-    productDescription,
-    category,
-  });
-}
+  const fetchEnrichment = useCallback(
+    async (regenerate?: boolean) => {
+      setError(null);
+      setLoading(true);
+
+      try {
+        const url = regenerate
+          ? "/api/enrich-product?regenerate=true"
+          : "/api/enrich-product";
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId,
+            productTitle,
+            productDescription,
+            category,
+          }),
+        });
+
+        if (!response.ok) {
+          setError(await getErrorMessage(response));
+          return;
+        }
+
+        const data: unknown = await response.json();
+
+        if (!isEnrichProductResponse(data)) {
+          setError("Não foi possível carregar o conteúdo gerado por IA.");
+          return;
+        }
+
+        setBullets(data.bullets);
+        setFaqs(data.faqs);
+      } catch {
+        setError("Não foi possível carregar o conteúdo gerado por IA.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [productId, productTitle, productDescription, category]
+  );
+
+  useEffect(() => {
+    void fetchEnrichment();
+  }, [fetchEnrichment]);
+
+  const hasContent = bullets.length > 0 || faqs.length > 0;
 
   return (
     <section>
       <h2>Conteúdo gerado por IA</h2>
 
-      {loading && <p>Carregando...</p>}
+      {loading && <p>Carregando conteúdo gerado por IA...</p>}
+
       {error && <p role="alert">{error}</p>}
 
-      {!loading && !error && (
+      {!loading && !error && !hasContent && <p>Nenhum conteúdo disponível.</p>}
+
+      {!loading && !error && hasContent && (
         <>
           <ul>
             {bullets.map((bullet) => (
@@ -87,7 +156,11 @@ function handleRegenerate() {
         </>
       )}
 
-      <button type="button" onClick={handleRegenerate}>
+      <button
+        type="button"
+        onClick={() => void fetchEnrichment(true)}
+        disabled={loading}
+      >
         Regenerar
       </button>
     </section>
